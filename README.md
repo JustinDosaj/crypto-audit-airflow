@@ -29,7 +29,7 @@ Before you being, make sure you have the following installed:
 git clone https://github.com/JustinDosaj/crypto-audit-airflow.git
 ```
 
-3. Run Project
+2. Run Project
 ```bash
 docker compose up
 ```
