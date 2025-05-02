@@ -1,5 +1,8 @@
 # Environment Files
 *.env
 
-# Ignore Log Folder
-/logs
+# Ignore everything inside logs folder
+/logs/*
+
+# Ignore Airflow Config Files
+/config/airflow.cfg

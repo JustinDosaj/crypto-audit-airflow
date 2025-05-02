@@ -29,8 +29,6 @@ Before you being, make sure you have the following installed:
 git clone https://github.com/JustinDosaj/crypto-audit-airflow.git
 ```
 
-2. Add `logs` folder to project root
-
 3. Run Project
 ```bash
 docker compose up
