@@ -11,14 +11,14 @@ The following environment variables are required for the app to function properl
 
 | Variable Name | Description |
 |---------------|-------------|
-| `AIRFLOW_UID` | Can manually set to default 50000 to get rid of AIRFLOW_UID is not set warning |
+| `AIRFLOW_UID` | Can manually set to default 50000 to get rid of the "AIRFLOW_UID is not set" warning |
 
 Create a `.env` file and define the variables.
 
 ## Installation
 
 ### Prequisites
-Before you being, make sure you have the following installed:
+Before you begin, make sure you have the following installed:
 
 - [Python](https://www.python.org/) - Used to write Airflow DAGs and transformation logic
 - [Docker](https://www.docker.com/) - Containerize all services for consistent and isolated development environments
