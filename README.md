@@ -29,15 +29,18 @@ Before you being, make sure you have the following installed:
 git clone https://github.com/JustinDosaj/crypto-audit-airflow.git
 ```
 
-2. Add `/logs` folder—was removed to reduce total files within repository
+2. Add the following folder to the project root—folders removed to reduce total files in repository but may cause errors if not there
+```bash
+    logs
+```
 
-3. Start Airflow
+3. Run Project
 ```bash
     docker compose up
 ```
 
 ## Project Status
-Airflow has been setup. Next step is to create the first DAG which will be responsible for the data ingestion workflow. This DAG should extract recent tweets that contain `$` from crypto influencers.Let's say I d
+Airflow has been setup. Next step is to create the first DAG which will be responsible for the data ingestion workflow. This DAG should extract recent tweets that contain `$` from crypto influencers.
 
 ### General To-Do List
 1. Build data pipeline to grab influencer data and posts containing promotions
