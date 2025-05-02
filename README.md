@@ -5,8 +5,6 @@ The goal of this project is to audit cryptocurrency influencers by setting up a 
 - [Python](https://www.python.org/) - Used to write Airflow DAGs and transformation logic
 - [Apache Airflow](https://airflow.apache.org/) - Orchestrate ETL workflows for scraping and transforming data
 - [Docker](https://www.docker.com/) - Containerize all services for consistent and isolated development environments
-- [PostgreSQL](https://www.postgresql.org/) - SQL database for storing cleaned and structured data
-- [Storage]()(Unknown) - Could use some data lake service or something like AWS S3
 
 ## Project Status
 Project has only been initialized—first step will be to create data pipelines to get
