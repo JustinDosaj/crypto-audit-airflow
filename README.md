@@ -29,14 +29,11 @@ Before you being, make sure you have the following installed:
 git clone https://github.com/JustinDosaj/crypto-audit-airflow.git
 ```
 
-2. Add the following folder to the project root—folders removed to reduce total files in repository but may cause errors if not there
-```bash
-    logs
-```
+2. Add `logs` folder to project root
 
 3. Run Project
 ```bash
-    docker compose up
+docker compose up
 ```
 
 ## Project Status
