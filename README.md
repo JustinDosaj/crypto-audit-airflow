@@ -1,4 +1,4 @@
-# Social Media Crypto Audit
+# Social Media Crypto Audit - Airflow Data Pipeline
 The goal of this project is to audit cryptocurrency influencers by setting up a data pipeline to determine their overall P/L of promoted cryptocurrencies, hopefully giving more insight on which influencers can be trusted.
 
 ## Tech Stack
