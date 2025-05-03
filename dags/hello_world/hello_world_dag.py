@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator # type: ignore
+from airflow.operators.empty import EmptyOperator # type: ignore
 
-def say_hello():
-    print("Hello World!")
+from common.say_hello import say_hello
 
 default_args = {
     'owner': 'airflow',
