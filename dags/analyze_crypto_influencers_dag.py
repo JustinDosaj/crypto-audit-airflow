@@ -2,11 +2,16 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
+import pandas as pd
 
 # Import your actual logic from your app code (e.g. from common/api/twitter import fetch_tweets)
 # Here, using placeholders for now
 def load_influencer_seed_list():
     print("Load influencers from seed file or DB")
+
+    df = pd.read_parquet("dags/data/influencer_seed.parquet", engine="pyarrow")
+    print("Load Influencers: ")
+    print(df)
 
 def fetch_recent_tweets():
     print("Fetch 50 most recent tweets for each influencer")
