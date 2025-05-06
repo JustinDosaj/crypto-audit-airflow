@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
+from mock.mock_fetch_tweets import mock_fetch_tweets
 import pandas as pd
 
 # Import your actual logic from your app code (e.g. from common/api/twitter import fetch_tweets)
@@ -10,14 +11,26 @@ def fetch_recent_tweets():
 
     print("Load influencers from seed file or DB")
     df = pd.read_parquet("dags/data/influencer_seed.parquet", engine="pyarrow")
-    print(df)
+
+    all_tweets = []
 
     for _, row in df.iterrows():
         handle = row["username"]  # adjust if your column is named differently
-        print(handle)
+        posts = mock_fetch_tweets(handle, count = 50)
+        all_tweets.extend(posts)
+
+    posts_df = pd.DataFrame(all_tweets)
+    print("Sample fetched tweets: ")
+    print(posts_df.head())
+
+    posts_df.to_parquet("dags/data/recent_tweets.parquet", engine="pyarrow", index=False)
 
 def extract_promotions_from_tweets():
-    print("Parse tweets for promoted $TICKERs and store first mention date")
+    
+    print("Load Mock Posts")
+    df = pd.read_parquet("dags/data/recent_tweets.parquet", engine="pyarrow")
+    print("Head: ", df.head())
+    print("Columns: ", df.columns)
 
 def fetch_price_data():
     print("Fetch historical and current price data for each promoted crypto")
