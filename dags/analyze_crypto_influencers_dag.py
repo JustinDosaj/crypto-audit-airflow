@@ -6,15 +6,15 @@ import pandas as pd
 
 # Import your actual logic from your app code (e.g. from common/api/twitter import fetch_tweets)
 # Here, using placeholders for now
-def load_influencer_seed_list():
-    print("Load influencers from seed file or DB")
+def fetch_recent_tweets():
 
+    print("Load influencers from seed file or DB")
     df = pd.read_parquet("dags/data/influencer_seed.parquet", engine="pyarrow")
-    print("Load Influencers: ")
     print(df)
 
-def fetch_recent_tweets():
-    print("Fetch 50 most recent tweets for each influencer")
+    for _, row in df.iterrows():
+        handle = row["username"]  # adjust if your column is named differently
+        print(handle)
 
 def extract_promotions_from_tweets():
     print("Parse tweets for promoted $TICKERs and store first mention date")
@@ -42,12 +42,6 @@ with DAG(
     catchup=False,
     tags=['crypto', 'influencers', 'pl-analysis']
 ) as dag:
-
-    # Task 1: Load influencers
-    load_influencers = PythonOperator(
-        task_id='load_influencer_seed_list',
-        python_callable=load_influencer_seed_list
-    )
 
     # Task 2: Fetch Tweets
     fetch_tweets = PythonOperator(
@@ -81,4 +75,4 @@ with DAG(
     )
 
     # DAG Task Flow
-    load_influencers >> fetch_tweets >> extract_promotions >> price_tasks >> calc_pl >> store_results
+    fetch_tweets >> extract_promotions >> price_tasks >> calc_pl >> store_results
