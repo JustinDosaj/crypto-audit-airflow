@@ -3,13 +3,14 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
 from mock.mock_fetch_tweets import mock_fetch_tweets
+import re
 import pandas as pd
 
 # Import your actual logic from your app code (e.g. from common/api/twitter import fetch_tweets)
 # Here, using placeholders for now
 def fetch_recent_tweets():
 
-    print("Load influencers from seed file or DB")
+    # Read influencer seed file
     df = pd.read_parquet("dags/data/influencer_seed.parquet", engine="pyarrow")
 
     all_tweets = []
@@ -20,20 +21,46 @@ def fetch_recent_tweets():
         all_tweets.extend(posts)
 
     posts_df = pd.DataFrame(all_tweets)
-    print("Sample fetched tweets: ")
-    print(posts_df.head())
 
+    # Upload recent_tweets to /data for access by next task
     posts_df.to_parquet("dags/data/recent_tweets.parquet", engine="pyarrow", index=False)
 
 def extract_promotions_from_tweets():
     
-    print("Load Mock Posts")
+    # Read recent_tweets file
     df = pd.read_parquet("dags/data/recent_tweets.parquet", engine="pyarrow")
-    print("Head: ", df.head())
-    print("Columns: ", df.columns)
+
+    # Filter out all tweets that do not contain a ticker symbol
+    df_with_tickers = df[df['text'].str.contains(r'\$', na=False)]
+
+    # Find tickers using regular expressions
+    df_with_tickers['tickers'] = df_with_tickers['text'].apply(lambda x: re.findall(r'\$([A-Za-z0-9]+)', x))
+
+    # Explode the tickers column to process each ticker seperately
+    df_with_tickers_exploded = df_with_tickers.explode('tickers')
+
+    # Sort by username and timestamp (there should be a created_at for every post)
+    df_with_tickers_exploded['created_at'] = pd.to_datetime(df_with_tickers_exploded['created_at'])
+    df_with_tickers_exploded.sort_values(by=['username', 'created_at'], ascending=[True, True], inplace=True)
+
+    # Find the first time a crypto ticker was mentioned
+    first_mentions = df_with_tickers_exploded.drop_duplicates(subset=['username', 'tickers'], keep='first')
+
+    # Select relevant columns
+    first_mentions = first_mentions[['username', 'tickers', 'created_at']]
+
+    # Store first mentions in parquet format for next task group
+    first_mentions.to_parquet("dags/data/first_mentions.parquet", engine="pyarrow", index=False)
+
 
 def fetch_price_data():
-    print("Fetch historical and current price data for each promoted crypto")
+    
+    # Read first mentions to get tickers and dates for calculations
+    df = pd.read_parquet("dags/data/first_mentions.parquet", engine="pyarrow")
+
+    print("DF Head: " ,df.head())
+    print("DF Columns: ", df.columns)
+    print("DF: ", df)
 
 def calculate_influencer_pl():
     print("Calculate P/L for each influencer and crypto")
