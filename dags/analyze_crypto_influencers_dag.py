@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
 from mock.mock_fetch_tweets import mock_fetch_tweets
+from mock.mock_fetch_price import mock_fetch_price
 import re
 import pandas as pd
 
@@ -16,6 +17,8 @@ def fetch_recent_tweets():
     all_tweets = []
 
     for _, row in df.iterrows():
+        print("______________: ", _)
+        print("Row: ", row)
         handle = row["username"]  # adjust if your column is named differently
         posts = mock_fetch_tweets(handle, count = 50)
         all_tweets.extend(posts)
@@ -34,20 +37,20 @@ def extract_promotions_from_tweets():
     df_with_tickers = df[df['text'].str.contains(r'\$', na=False)]
 
     # Find tickers using regular expressions
-    df_with_tickers['tickers'] = df_with_tickers['text'].apply(lambda x: re.findall(r'\$([A-Za-z0-9]+)', x))
+    df_with_tickers['ticker'] = df_with_tickers['text'].apply(lambda x: re.findall(r'\$([A-Za-z0-9]+)', x))
 
     # Explode the tickers column to process each ticker seperately
-    df_with_tickers_exploded = df_with_tickers.explode('tickers')
+    df_with_tickers_exploded = df_with_tickers.explode('ticker')
 
     # Sort by username and timestamp (there should be a created_at for every post)
     df_with_tickers_exploded['created_at'] = pd.to_datetime(df_with_tickers_exploded['created_at'])
     df_with_tickers_exploded.sort_values(by=['username', 'created_at'], ascending=[True, True], inplace=True)
 
     # Find the first time a crypto ticker was mentioned
-    first_mentions = df_with_tickers_exploded.drop_duplicates(subset=['username', 'tickers'], keep='first')
+    first_mentions = df_with_tickers_exploded.drop_duplicates(subset=['username', 'ticker'], keep='first')
 
     # Select relevant columns
-    first_mentions = first_mentions[['username', 'tickers', 'created_at']]
+    first_mentions = first_mentions[['username', 'ticker', 'created_at']]
 
     # Store first mentions in parquet format for next task group
     first_mentions.to_parquet("dags/data/first_mentions.parquet", engine="pyarrow", index=False)
@@ -58,12 +61,40 @@ def fetch_price_data():
     # Read first mentions to get tickers and dates for calculations
     df = pd.read_parquet("dags/data/first_mentions.parquet", engine="pyarrow")
 
+    results = []
+
+    for _, row in df.iterrows():
+        past_price, current_price = mock_fetch_price(row['ticker'], row['created_at']) # Fetch Mock Profit/Loss
+        pl_dollar = current_price - past_price
+        pl_percent = 0
+        
+        # We divide by past_price regardless, so check to make sure is NOT zero else calculate percentage gained
+        if (past_price == 0):
+            pl_percent = None
+        else:
+            pl_percent = round(((current_price - past_price) / past_price) * 100, 2)
+
+        results.append({
+            'username': row['username'],
+            'ticker': row['ticker'],
+            'past_price': past_price,
+            'current_price': current_price,
+            'pl_dollar': pl_dollar,
+            'pl_percent': pl_percent,
+        })
+
+        df_pl = pd.DataFrame(results)
+        df_pl.to_parquet("dags/data/price_results.parquet")
+
+
+def calculate_influencer_pl():
+
+    # Read first mentions to get tickers and dates for calculations
+    df = pd.read_parquet("dags/data/price_results.parquet", engine="pyarrow")
+
     print("DF Head: " ,df.head())
     print("DF Columns: ", df.columns)
     print("DF: ", df)
-
-def calculate_influencer_pl():
-    print("Calculate P/L for each influencer and crypto")
 
 def store_final_results():
     print("Save final P/L summary to dashboard-ready table")
