@@ -55,7 +55,6 @@ def extract_promotions_from_tweets():
     # Store first mentions in parquet format for next task group
     first_mentions.to_parquet("dags/data/first_mentions.parquet", engine="pyarrow", index=False)
 
-
 def fetch_price_data():
     
     # Read first mentions to get tickers and dates for calculations
@@ -85,7 +84,6 @@ def fetch_price_data():
 
         df_pl = pd.DataFrame(results)
         df_pl.to_parquet("dags/data/price_results.parquet")
-
 
 def calculate_influencer_pl():
 
