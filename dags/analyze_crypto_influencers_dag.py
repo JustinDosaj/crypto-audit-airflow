@@ -90,12 +90,23 @@ def calculate_influencer_pl():
     # Read first mentions to get tickers and dates for calculations
     df = pd.read_parquet("dags/data/price_results.parquet", engine="pyarrow")
 
+    grouped = df.groupby("username").agg(
+        avg_pl_percent=('pl_percent', 'mean'),  # Calculate the mean of the profit/loss percentage
+        num_promoted=('ticker', 'count')        # Count the number of unique coins promoted
+    ).reset_index()
+
+    print(grouped.head())
+
+    grouped.to_parquet("dags/data/influencer_pl.parquet", engine="pyarrow")
+
+
+def store_final_results():
+
+    df = pd.read_parquet("dags/data/influencer_pl.parquet", engine="pyarrow")
+
     print("DF Head: " ,df.head())
     print("DF Columns: ", df.columns)
     print("DF: ", df)
-
-def store_final_results():
-    print("Save final P/L summary to dashboard-ready table")
 
 default_args = {
     'owner': 'airflow',
