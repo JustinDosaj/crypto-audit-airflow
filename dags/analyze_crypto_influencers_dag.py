@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
+from airflow.providers.postgres.hooks.postgres import PostgresHook # type: ignore
 from mock.mock_fetch_tweets import mock_fetch_tweets
 from mock.mock_fetch_price import mock_fetch_price
 import re
@@ -99,15 +100,45 @@ def calculate_influencer_pl():
 
     grouped.to_parquet("dags/data/influencer_pl.parquet", engine="pyarrow")
 
-
-# TODO: Store final results in PostgreSQL DB
 def store_final_results():
 
     df = pd.read_parquet("dags/data/influencer_pl.parquet", engine="pyarrow")
 
     print("DF Head: " ,df.head())
-    print("DF Columns: ", df.columns)
-    print("DF: ", df)
+
+    # Connect to Postgres via Airflow Connection
+    hook = PostgresHook(postgres_conn_id='postgres_default')  # Ensure this ID exists in Airflow Connections
+    conn = hook.get_conn()
+    cursor = conn.cursor()
+
+    # Create table if it doesn't exist
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS influencer_pl (
+            username TEXT PRIMARY KEY,
+            avg_pl_percent FLOAT,
+            num_promoted INTEGER
+        );
+    """)
+
+    # Insert data row by row
+    for _, row in df.iterrows():
+        cursor.execute("""
+            INSERT INTO influencer_pl (username, avg_pl_percent, num_promoted)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (username)
+            DO UPDATE SET avg_pl_percent = EXCLUDED.avg_pl_percent,
+                          num_promoted = EXCLUDED.num_promoted;
+        """, (row["username"], row["avg_pl_percent"], row["num_promoted"]))
+
+    conn.commit()
+    cursor.close()
+    print("✅ Data written to PostgreSQL.")
+
+def test_query():
+    hook = PostgresHook(postgres_conn_id='postgres_default')
+    result = hook.get_records("SELECT * FROM influencer_pl LIMIT 5;")
+    for row in result:
+        print(row)
 
 default_args = {
     'owner': 'airflow',
@@ -155,5 +186,10 @@ with DAG(
         python_callable=store_final_results
     )
 
+    test_query_task = PythonOperator(
+        task_id='test_query',
+        python_callable=test_query
+    )
+
     # DAG Task Flow
-    fetch_tweets >> extract_promotions >> price_tasks >> calc_pl >> store_results
+    fetch_tweets >> extract_promotions >> price_tasks >> calc_pl >> store_results >> test_query_task
