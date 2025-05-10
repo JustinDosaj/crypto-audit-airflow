@@ -38,5 +38,4 @@ docker compose up
 Airflow has been setup. Next step is to create the first DAG which will be responsible for the data ingestion workflow. This DAG should extract recent tweets that contain `$` from crypto influencers.
 
 ### General To-Do List
-1. Build data pipeline to grab influencer data and posts containing promotions
-2. Build data pipeline to calculate profit/loss—store data in database
+1. Create SQL DB with influencer table to store final results

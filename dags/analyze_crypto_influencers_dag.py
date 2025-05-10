@@ -100,6 +100,7 @@ def calculate_influencer_pl():
     grouped.to_parquet("dags/data/influencer_pl.parquet", engine="pyarrow")
 
 
+# TODO: Store final results in PostgreSQL DB
 def store_final_results():
 
     df = pd.read_parquet("dags/data/influencer_pl.parquet", engine="pyarrow")
